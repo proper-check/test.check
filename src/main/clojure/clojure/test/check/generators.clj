@@ -406,6 +406,7 @@
       ;; generate a vector of booleans, but never the empty vector
       (gen/not-empty (gen/vector gen/boolean))
   "
+
   (partial such-that clojure.core/not-empty))
 
 (defn no-shrink
