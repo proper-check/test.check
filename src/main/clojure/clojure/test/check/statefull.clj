@@ -108,15 +108,32 @@
     nil
     (cons size (test (dec size)))))
 
+   (gen-bind
+     (sized #(choose 0 %))
+     (fn [num-elements-rose]
+       (gen-bind (sequence gen-bind gen-pure
+                           (repeat (rose-root num-elements-rose)
+                                   generator))
+                 (fn [roses]
+                   (gen-pure (shrink-rose clojure.core/vector
+                                          roses))))))
 (gen/sample (gen/gen-bind
-             (gen/sequence gen/gen-bind gen/gen-pure [gen/int gen/int])
-             (fn [roses]
-               (gen/gen-pure (gen/zip-rose clojure.core/vector roses)))) 2)
+             (gen/sized #(gen/choose 0 %))
+             (fn [num]
+               (gen/gen-bind
+                (gen/sequence gen/gen-bind gen/gen-pure
+                              (repeat (gen/rose-root num)
+                               (gen/such-that
+                                       #((:pre %) 2)
+                                       (gen-command cmds))
+                                      ))
+                (fn [roses]
+                  (gen/gen-pure (gen/zip-rose clojure.core/vector roses)))))) 10)
 
 (def cmds [{:next-state inc
-            :pre (constantly true)}
-           {:next-state identity
-            :pre (constantly false)}])
+            :pre odd?}
+           {:next-state dec
+            :pre even?}])
 
 (gen/sample (gen/such-that #((:pre %) 1) (gen-command cmds)) 1)
 (gen/sample (gen-commands cmds))
