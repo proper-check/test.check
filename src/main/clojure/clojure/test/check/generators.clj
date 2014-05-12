@@ -16,7 +16,7 @@
 ;; Generic helpers
 ;; ---------------------------------------------------------------------------
 
-(defn- sequence
+(defn sequence
   "Haskell type:
   Monad m => [m a] -> m [a]
 
