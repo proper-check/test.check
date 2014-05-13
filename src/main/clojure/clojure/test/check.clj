@@ -46,7 +46,6 @@
               result (:result result-map)
               args (:args result-map)]
           (cond
-            (= result :pre) (recur so-far rest-size-seq)
             (instance? Throwable result) (failure
                                            property result-map-rose
                                            so-far size created-seed)

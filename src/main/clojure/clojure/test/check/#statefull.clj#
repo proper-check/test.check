@@ -120,7 +120,7 @@
                   real)
            false))))))
 
-(gen/sample (gen-commands cmds))
+(gen/sample (gen-commands cmds))q
 
 (tc/quick-check 2 (run-commands cmds))
 circ-buff
