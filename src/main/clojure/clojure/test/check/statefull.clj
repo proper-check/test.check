@@ -66,12 +66,6 @@
     (post [state res call]
           (= (count state) res))))
 
-(defn find-command [cmds cmd]
-  (some (fn [{target :target :as full-cmd}]
-          (when (= target cmd)
-            full-cmd))
-        cmds))
-
 (def cmds [{:next-state inc
             :target inc
             :pre #(> % 0)}
@@ -95,8 +89,6 @@
 
 (gen/sample (gen-commands cmds))
 
-
-
 (defn run-commands
   [{:keys [init-m init-r clean commands]}]
   (prop/for-all
@@ -117,33 +109,6 @@
                   real)
            false))))))
 
-(gen/sample (gen-commands cmds))
-
 (tc/quick-check 100 (run-commands {:commands cmds}))
 
-#_(defn gen-props
-  [{:keys [init-m init-r clean commands]}]
-  (prop/for-all
-   [fns (generate-calls commands)]
-   (loop [fns fns
-          model (init-m)
-          real (init-r)]
-     (if (empty? Fns)
-       (do (clean real) true)
-       (let [[fun & args] (first fns)
-             {:keys [next-state post pre]}
-             (find-command commands fun)]
-         (if-not (pre model args)
-           ;; skip this seq of commands
-           :pre
-           (let [real-result (apply fun real args)]
-
-             (if (post model real-result (cons real args))
-               (recur (rest fns) 
-                      (next-state model real-result 
-                                  (cons real args)) real)
-               (do (clean real)
-                   (println "failed")
-                   (println "(" fun real args ") => " real-result)
-                   false)))))))))
 
