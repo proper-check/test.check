@@ -101,15 +101,12 @@
   [{:keys [init-m init-r clean commands]}]
   (prop/for-all
    [rand-cmds (gen-commands commands)]
-   true
-   
-   #_(loop [rand-cmds rand-cmds
+   (loop [rand-cmds rand-cmds
           state #_FIXINITSATE!!! 0
           real #_FIXINITSTATE!!! 0]
      (if (empty? rand-cmds)
        true
-       (recur (next rand-cmds) state real)
-       #_(let [cmd (first rand-cmds)
+       (let [cmd (first rand-cmds)
              target (:target cmd)
              post (:post cmd)
              next-state (:next-state cmd)
@@ -122,8 +119,8 @@
 
 (gen/sample (gen-commands cmds))
 
-(tc/quick-check 2 (run-commands cmds))
-circ-buff
+(tc/quick-check 100 (run-commands {:commands cmds}))
+
 #_(defn gen-props
   [{:keys [init-m init-r clean commands]}]
   (prop/for-all
