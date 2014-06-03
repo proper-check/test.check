@@ -44,34 +44,22 @@
 (defn size [l]
   (.size l))
 
-(defcommands circ-buff
-  (init-m [] [])
-  (init-r [] (ArrayList. 4))
-  (clean [init-r])
-  (command -add []
-    (pre [state]
-      (< (count state) 4))
-    (next-state [state]
-      (conj state 1)))
-
-  (command -get []
-    (pre [state]
-      (seq state))
-    (post [state res call]
-      (= res (first state)))
-    (next-state [state]
-      (identity state)))
-
-  (command size []
-    (post [state res call]
-          (= (count state) res))))
-
-(def cmds [{:next-state inc
-            :target inc
-            :pre #(> % 0)}
-           {:next-state identity
-            :target identity
-            :pre even?}])
+(def cmds {:clean identity
+           :cmds {:-new {:fn (fn [r] (ArrayList.))
+                         :fn-name :-new
+                         :next-state (fn [s] [])
+                         :pre (fn [s] true)
+                         :post (fn [s r args] (not (nil? r)))}
+                  :add  {:fn (fn [r] (-add r))
+                         :fn-name :add
+                         :next-state (fn [s] (conj s 1))
+                         :pre (fn [s] (not (nil? s)))
+                         :post (fn [s r args] true)}
+                  :get  {:fn (fn [r] (-get r))
+                         :fn-name :get
+                         :next-state (fn [s] s)
+                         :pre (fn [s] (seq s))
+                         :post (fn [s r args] (= (last s) r))}}})
 
 (defn gen-command [cmds]
   (gen/one-of (mapv gen/return cmds)))
@@ -85,30 +73,28 @@
                         #(gen-sized ((:next-state %) state)
                                     (dec sz)
                                     (conj acc %)))))]
-    (gen/sized #(gen-sized  0 % []))))
+    (gen/sized #(gen-sized nil % []))))
 
-(gen/sample (gen-commands cmds))
+(gen/sample (gen-commands (vals (:cmds cmds))))
 
 (defn run-commands
-  [{:keys [init-m init-r clean commands]}]
+  [{:keys [cmds]}]
   (prop/for-all
-   [rand-cmds (gen-commands commands)]
+   [rand-cmds (gen-commands (vals cmds))]
    (loop [rand-cmds rand-cmds
-          state #_FIXINITSATE!!! 0
-          real #_FIXINITSTATE!!! 0]
+          state nil
+          real nil]
      (if (empty? rand-cmds)
        true
        (let [cmd (first rand-cmds)
-             target (:target cmd)
+             target (:fn cmd)
              post (:post cmd)
              next-state (:next-state cmd)
              real-result (target real)]
          (if (post state real-result [])
            (recur (rest rand-cmds)
                   (next-state state)
-                  real)
+                  (or real real-result))
            false))))))
 
-(tc/quick-check 100 (run-commands {:commands cmds}))
-
-
+(tc/quick-check 100 (run-commands cmds))
